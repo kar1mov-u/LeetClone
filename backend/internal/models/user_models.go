@@ -1,0 +1,17 @@
+package models
+
+import "time"
+
+type UserRegister struct {
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+type User struct {
+	Username   string
+	Email      string
+	Password   string
+	Created_at time.Time
+}
+
+// username, email, password, created_at,
