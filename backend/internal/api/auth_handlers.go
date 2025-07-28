@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"net/mail"
@@ -45,6 +46,27 @@ func (api *API) registerUser(w http.ResponseWriter, r *http.Request) {
 	}
 	RespondWithJson(w, map[string]uuid.UUID{"userID": userID}, 200)
 	//do some shit
+}
+
+func (api *API) loginUser(w http.ResponseWriter, r *http.Request) {
+	var loginData models.UserLogin
+	err := json.NewDecoder(r.Body).Decode(&loginData)
+	if err != nil {
+		RespondWithErr(w, fmt.Sprintf("fail to decode JSON:%v", err), http.StatusBadRequest)
+		return
+	}
+	if len(loginData.Password) == 0 || len(loginData.Username) == 0 {
+		RespondWithErr(w, "Fields cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	accessToken, err := api.userService.LoginUser(r.Context(), loginData)
+	if err != nil {
+		RespondWithErr(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	RespondWithJson(w, map[string]string{"access_token": accessToken}, 200)
 
 }
 

@@ -1,3 +1,4 @@
+// Repo
 package repo
 
 import (
@@ -58,4 +59,31 @@ func (r *UserRepository) CreateUser(context context.Context, data models.UserReg
 		}
 	}
 	return id, nil
+}
+
+func (r *UserRepository) GetUserPassword(context context.Context, username string) (uuid.UUID, string, error) {
+	var dbPass string
+	var userID uuid.UUID
+	query := `SELECT id,password FROM users WHERE username=$1 OR email=$1`
+	row := r.conn.QueryRow(context, query, username)
+	err := row.Scan(&userID, &dbPass)
+	if err != nil {
+		return uuid.UUID{}, "", err
+	}
+	return userID, dbPass, nil
+}
+
+func (r *UserRepository) GetUserByID(context context.Context, id uuid.UUID) (models.User, error) {
+	dbUser := models.User{}
+	query := `SELECT username, email, created_at FROM users where id=$1`
+	row := r.conn.QueryRow(context, query, id)
+	err := row.Scan(
+		&dbUser.Username,
+		&dbUser.Email,
+		&dbUser.Created_at,
+	)
+	if err != nil {
+		return dbUser, err
+	}
+	return dbUser, nil
 }

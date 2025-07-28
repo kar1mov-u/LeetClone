@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"os"
 
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -29,7 +30,7 @@ func main() {
 		log.Fatal(err)
 	}
 	userRepo := database.NewUserRepo(pool)
-	userService := services.NewUserService(userRepo)
+	userService := services.NewUserService(userRepo, os.Getenv("JWT_KEY"))
 
 	api := api.New(userService)
 	api.Start()

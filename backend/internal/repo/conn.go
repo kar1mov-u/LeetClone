@@ -1,3 +1,4 @@
+// Creates a connection pool(pgx.Pool) to Database(postgres). For dev enviroment, runs migrations everytime server is started
 package repo
 
 import (
@@ -40,6 +41,7 @@ func (cfg Config) GetConnString() string {
 	return connString
 }
 
+// create a connection pool to DB
 func NewConn(ctx context.Context, cfg Config) (*pgxpool.Pool, error) {
 	connString := cfg.GetConnString()
 	connString += fmt.Sprintf("&pool_max_conns=%d&pool_min_conns=%d",

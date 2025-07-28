@@ -23,9 +23,19 @@ func New(userService *services.UserService) *API {
 
 func (api *API) setRoutes() {
 	//set routes of the api
-	api.router.Use(middleware.Logger)
+	api.router.Route("/api", func(r1 chi.Router) {
+		r1.Use(middleware.Logger)
+		r1.Route("/auth", func(r2 chi.Router) {
+			r2.Post("/register", api.registerUser)
+			r2.Post("/login", api.loginUser)
+		})
+		r1.Route("/users", func(r2 chi.Router) {
+			r2.Use(api.accessTokenMiddleware(api.userService.JwtSecret))
+			r2.Get("/me", api.getUser)
+		})
 
-	api.router.Post("/api/user/register", api.registerUser)
+	})
+
 }
 
 func (api *API) Start() error {
