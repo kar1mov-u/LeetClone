@@ -14,6 +14,7 @@ type UserLogin struct {
 type User struct {
 	Username   string
 	Email      string
+	Role       string
 	Created_at time.Time
 }
 

@@ -10,8 +10,9 @@ import (
 )
 
 type API struct {
-	userService *services.UserService
-	router      *chi.Mux
+	userService    *services.UserService
+	problemService *services.ProblemService
+	router         *chi.Mux
 }
 
 func New(userService *services.UserService) *API {
@@ -29,13 +30,19 @@ func (api *API) setRoutes() {
 			r2.Post("/register", api.registerUser)
 			r2.Post("/login", api.loginUser)
 		})
+
 		r1.Route("/users", func(r2 chi.Router) {
 			r2.Use(api.accessTokenMiddleware(api.userService.JwtSecret))
 			r2.Get("/me", api.getUser)
 		})
 
-	})
+		r1.Route("/admin", func(r2 chi.Router) {
+			r2.Use(api.accessTokenMiddleware(api.userService.JwtSecret))
+			r2.Use(api.AdminOnlyMiddleware)
+			r2.Post("/create/problem", api.CreateProblem) //admin should create a problem
+		})
 
+	})
 }
 
 func (api *API) Start() error {

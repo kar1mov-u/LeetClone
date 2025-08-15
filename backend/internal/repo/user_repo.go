@@ -5,18 +5,18 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/kar1mov-u/LeetClone/internal/models"
 )
 
 type UserRepository struct {
-	conn *pgxpool.Pool
+	conn Queryer
 }
 
-func NewUserRepo(conn *pgxpool.Pool) *UserRepository {
-	return &UserRepository{conn: conn}
+func NewUserRepo(q Queryer) *UserRepository {
+	return &UserRepository{conn: q}
 }
 
 func (r *UserRepository) CheckUsername(context context.Context, username string) bool {
@@ -46,7 +46,7 @@ func (r *UserRepository) CheckEmail(context context.Context, email string) bool 
 
 func (r *UserRepository) CreateUser(context context.Context, data models.UserRegister) (uuid.UUID, error) {
 	id := uuid.New()
-	query := "INSERT INTO users (username, email, password) VALUES($1, $2, $3) RETURNING id"
+	query := "INSERT INTO users (username, email, password, role) VALUES($1, $2, $3, 'user') RETURNING id"
 	rows, err := r.conn.Query(context, query, data.Username, data.Email, data.Password)
 	if err != nil {
 		return id, err
@@ -61,28 +61,32 @@ func (r *UserRepository) CreateUser(context context.Context, data models.UserReg
 	return id, nil
 }
 
-func (r *UserRepository) GetUserPassword(context context.Context, username string) (uuid.UUID, string, error) {
+func (r *UserRepository) GetUserPasswordAndRole(context context.Context, username string) (uuid.UUID, string, string, error) {
 	var dbPass string
+	var role string
 	var userID uuid.UUID
-	query := `SELECT id,password FROM users WHERE username=$1 OR email=$1`
+	query := `SELECT id,password, role FROM users WHERE username=$1 OR email=$1`
 	row := r.conn.QueryRow(context, query, username)
-	err := row.Scan(&userID, &dbPass)
+	err := row.Scan(&userID, &dbPass, &role)
 	if err != nil {
-		return uuid.UUID{}, "", err
+		return uuid.UUID{}, "", "", err
 	}
-	return userID, dbPass, nil
+	return userID, dbPass, role, nil
 }
 
 func (r *UserRepository) GetUserByID(context context.Context, id uuid.UUID) (models.User, error) {
 	dbUser := models.User{}
-	query := `SELECT username, email, created_at FROM users where id=$1`
+	query := `SELECT username, email,role, created_at FROM users where id=$1`
 	row := r.conn.QueryRow(context, query, id)
 	err := row.Scan(
 		&dbUser.Username,
 		&dbUser.Email,
+		&dbUser.Role,
 		&dbUser.Created_at,
 	)
 	if err != nil {
+		log.Println(err)
+
 		return dbUser, err
 	}
 	return dbUser, nil

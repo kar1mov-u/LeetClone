@@ -29,8 +29,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	// pool.SendBatch()
 	userRepo := database.NewUserRepo(pool)
-	userService := services.NewUserService(userRepo, os.Getenv("JWT_KEY"))
+	userService := services.NewUserService(userRepo, pool, os.Getenv("JWT_KEY"))
 
 	api := api.New(userService)
 	api.Start()

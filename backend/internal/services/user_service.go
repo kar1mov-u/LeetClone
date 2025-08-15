@@ -16,11 +16,12 @@ import (
 
 type UserService struct {
 	userRepo  *repo.UserRepository
+	txStarter TxStarter
 	JwtSecret string
 }
 
-func NewUserService(userRepo *repo.UserRepository, jwtSecret string) *UserService {
-	return &UserService{userRepo: userRepo, JwtSecret: jwtSecret}
+func NewUserService(userRepo *repo.UserRepository, txStarter TxStarter, jwtSecret string) *UserService {
+	return &UserService{userRepo: userRepo, txStarter: txStarter, JwtSecret: jwtSecret}
 }
 
 var (
@@ -44,12 +45,11 @@ func (s *UserService) RegisterUser(context context.Context, data models.UserRegi
 		return uuid.UUID{}, fmt.Errorf("Fail to regster user: %v", err)
 	}
 	return userID, nil
-
 }
 
 func (s *UserService) LoginUser(context context.Context, data models.UserLogin) (string, error) {
 	//get password from the DB
-	userID, dbPass, err := s.userRepo.GetUserPassword(context, data.Username)
+	userID, dbPass, role, err := s.userRepo.GetUserPasswordAndRole(context, data.Username)
 	if err != nil {
 		log.Println(err)
 
@@ -60,12 +60,10 @@ func (s *UserService) LoginUser(context context.Context, data models.UserLogin) 
 		return "", InvalidCredentialsErr
 	}
 
-	//create jwt
-	accessToken, err := createToken(userID, 30, s.JwtSecret)
+	accessToken, err := createToken(userID, role, 30, s.JwtSecret)
 	if err != nil {
 		return "", err
 	}
-
 	return accessToken, nil
 }
 
@@ -88,10 +86,11 @@ func verifyPass(hash, plain string) bool {
 
 }
 
-func createToken(userID uuid.UUID, expiresMinutes int, key string) (string, error) {
+func createToken(userID uuid.UUID, role string, expiresMinutes int, key string) (string, error) {
 	claims := jwt.MapClaims{
-		"sub": userID.String(),
-		"exp": time.Now().Add(time.Duration(expiresMinutes) * time.Minute).Unix(),
+		"sub":  userID.String(),
+		"role": role,
+		"exp":  time.Now().Add(time.Duration(expiresMinutes) * time.Minute).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signedToken, err := token.SignedString([]byte(key))

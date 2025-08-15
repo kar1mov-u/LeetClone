@@ -48,8 +48,27 @@ func (api *API) accessTokenMiddleware(secret string) func(http.Handler) http.Han
 				http.Error(w, "invalid token payload", http.StatusUnauthorized)
 				return
 			}
+			role, ok := claims["role"].(string)
+			if !ok {
+				http.Error(w, "invald token payload", http.StatusUnauthorized)
+				return
+			}
+
 			ctx := context.WithValue(r.Context(), "userID", userID)
+			ctx = context.WithValue(ctx, "role", role)
+
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
+}
+
+func (api *API) AdminOnlyMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		role := r.Context().Value("role").(string)
+		if role != "admin" {
+			http.Error(w, "user is not admin", http.StatusUnauthorized)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }

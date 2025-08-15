@@ -1,0 +1,11 @@
+                                             List of databases
+   Name    | Owner | Encoding |  Collate   |   Ctype    | ICU Locale | Locale Provider | Access privileges 
+-----------+-------+----------+------------+------------+------------+-----------------+-------------------
+ leetclone | admin | UTF8     | en_US.utf8 | en_US.utf8 |            | libc            | 
+ postgres  | admin | UTF8     | en_US.utf8 | en_US.utf8 |            | libc            | 
+ template0 | admin | UTF8     | en_US.utf8 | en_US.utf8 |            | libc            | =c/admin         +
+           |       |          |            |            |            |                 | admin=CTc/admin
+ template1 | admin | UTF8     | en_US.utf8 | en_US.utf8 |            | libc            | =c/admin         +
+           |       |          |            |            |            |                 | admin=CTc/admin
+(4 rows)
+
